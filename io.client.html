@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Tic-tac-toe</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+	<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+	<style>
+		.col-centered{
+	        float: none;
+	        margin: 0 auto;
+	    }
+	    .f-s{
+	    	width: 123px;
+	    	height: 123px;
+	    	cursor: pointer;
+	    	transition: all 0.2s;
+	    	border:solid;
+	    	border-color: silver;
+	    }
+	    .f-s:hover{
+			background: rgba(255,0,0,0.03);
+			text-align: center;
+	    }
+	    .o-a{
+	    	overflow: auto;
+	    }
+
+	    .score{
+	    	font-size: 18px;
+	    }
+	    .hidden{
+	    	display: none;
+	    }
+	    .inner-container{
+			position: relative;
+			width: 369px;
+			margin: auto;
+	    }
+	    table.anim{
+	    	position: relative;
+	    }
+	    .rival-cursos{
+	    	position: absolute;
+	    	border-radius: 20px;
+	    	width: 10px;
+	    	height: 10px;
+	    	border: solid 1px blue;
+	    	background: rgba(0,0,255,0.2);
+	    }
+	</style>
+</head>
+<body>
+	<div class="container-fluid mt-2">
+		<h1 class="text-center mb-4"><kbd>P2P</kbd> <em>Tic Tac Toe</em></h1>
+		<div class="game-container hidden">
+			<div class="row">
+				<div class="col-md-5 col-centered o-a mb-3 text-center">
+					<strong class="float-left score"><span class="pl-name">...</span> <span class="badge badge-warning pl-score">0</span></strong>
+					<i class="material-icons">thumbs_up_down</i>
+					<strong class="float-right score"><span class="badge badge-warning rival-score">0</span> <span class="rival-name">...</span></strong>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-4 col-centered text-center">
+					<code>
+						<em>Info:</em>
+						your color is <span class="badge badge-danger">RED</span>
+					</code>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-3 col-centered text-center my-3">
+					<code class="game-condition">...</code>
+				</div>
+			</div>
+		</div>
+		<div class="init-container">
+			<h3 class="text-center mb-4 server-status">Status: <span class="badge badge-danger">Not connected</span></h3>
+		    <div class="col-md-4 col-centered mb-2 name-container">
+		 	   <input type="text" class="form-control player-name" maxlength="12" placeholder="Give me your name" value="" autofocus="on"> 
+		    </div>
+		    <div class="col-md-4 col-centered text-center button-container">
+			    <input type="button" class="btn btn-primary connect-io" value="Connect to a server"> 
+		    </div>
+
+		    <div class="col-md-6 col-centered mt-5 text-center hidden server-action-container">
+			    <button class="btn btn-warning join-server">JOIN </button>
+			    <button class="btn btn-danger create-server">CREATE </button>
+		    </div>
+
+		    <div class="col-md-6 col-centered mt-5 hidden online-tables">
+			    <table class="table table-sm table-hover table-stripped">
+			    <thead>
+			      <tr>
+			        <th scope="col">#ID</th>
+			        <th scope="col">User</th>
+			        <th scope="col">Game Token</th>
+			        <th scope="col"><span class="float-right pr-3">Action</span></th>
+			      </tr>
+			    </thead>
+			    <tbody class="createTablesHere">
+			      
+			    </tbody>
+			  </table>
+		    </div>
+		</div>
+	</div>
+	
+	<div class="inner-container hidden">
+		<table class="anim table-bordered col-centered game-area">
+			<tr>
+		        <td class="f-s" data-id='0'></td>
+		        <td class="f-s" data-id='1'></td>
+		        <td class="f-s" data-id='2'></td>
+	        </tr>
+	        <tr>
+		        <td class="f-s" data-id='3'></td>
+		        <td class="f-s" data-id='4'></td>
+		        <td class="f-s" data-id='5'></td>
+	        </tr>
+	        <tr>
+		        <td class="f-s" data-id='6'></td>
+		        <td class="f-s" data-id='7'></td>
+		        <td class="f-s" data-id='8'></td>
+	        </tr>
+		</table>
+	</div>
+
+<script>
+$(document).ready(function(){
+	$('.join-server').click(function(){
+		$(this).html('Refresh list')
+		$('.online-tables').removeClass('hidden')
+	});
+
+  if(null !== localStorage.getItem("playerName")){
+	$('.player-name').val(localStorage.getItem("playerName"));
+  }
+});
+
+
+$(document).ready(function(){
+	$('.connect-io').click(function(){
+   		if($('.player-name').val().length !== 0){
+			
+			$('.name-container').addClass('hidden')
+			$('.button-container').addClass('hidden')
+			$('.server-action-container').removeClass('hidden')
+
+			let socket  = io(),
+				tableId = 0,
+				blocks  = new Array(),
+				isAdmin = false,
+				myTurn  = false,
+				gameStarted = false,
+				PlayerName = $('.player-name').val();
+				localStorage.setItem('playerName', PlayerName);
+   			
+   			if( undefined !== socket ){
+   				$('.game-condition').text('Wait');
+
+				$('.game-area td').each(function(){
+					blocks.push({
+						'id': $(this).data('id'),
+						'disabled': false,
+						'obj': this,
+						'value': -1
+					});
+				});
+
+				$('.game-area td').on('click', function(){
+					if( !blocks[$(this).data('id')].disabled && myTurn && gameStarted ){
+						blocks[$(this).data('id')].disabled = true;
+						myTurn = false
+						$(this).css('background', 'rgba(255,0,0,0.5)');
+
+						let obj = {
+	                      'value': $(this).data('id'),
+	                      // 'rects': rects,
+	                      'table_id': tableId,
+	                      'myName': PlayerName
+	                    };
+						socket.emit('move', JSON.stringify(obj));
+   						$('.game-condition').text('Wait');
+
+					}
+				});
+
+
+				$("table.anim").mousemove(function(e){
+					var divPos = {};
+					var offset = $("table.anim").parent().offset();
+				    if(gameStarted){
+					    divPos = {
+					        left: e.pageX - offset.left,
+					        top: e.pageY - offset.top
+					    };
+
+						socket.emit('hover', JSON.stringify({
+							'mousePos':divPos,
+							'table_id': tableId
+						}));
+						// console.log('current',divPos)
+					}
+				});
+				
+				socket.on('hover', function(smsg){
+					let msg = JSON.parse(smsg);
+					if($('.rival-cursos').length == 0){
+						$('table.anim').append(`<div class="rival-cursos"></div>`)
+					}
+					// console.log('remote ',msg.mousePos)
+					$('.rival-cursos').css({
+						'left': `${msg.mousePos.left}px`,
+						'top': `${msg.mousePos.top}px`
+					});
+					/*$('.game-area td').css('border-color','silver');
+					$(blocks[msg.id].obj).css('border-color','rgba(0,0,255,0.5)');*/
+				});
+
+				socket.on('offline', function(){
+					gameStarted = false;
+					swal('Sorry Dude', $('.rival-name').html()+' is offline. Try to play with someone else.', 'error')
+					.then(ok => {
+						window.location.reload()
+					})
+				});
+
+				// update function for exchange data
+			 	socket.on('update', function(smsg){
+		        	myTurn = true;
+		        	let msg = JSON.parse(smsg);
+		        	// disable client's block and paint it
+		        	blocks[parseInt(msg.value)].disabled = true;
+		        	$(blocks[parseInt(msg.value)].obj).css('background','rgba(0,0,255,0.5)');
+
+		        	// console.log('its your turn dude!')
+					// console.log('server responded', smsg);
+   					$('.game-condition').text('Your Turn');
+
+				});
+
+			 	socket.on('score', function(smsg){
+			 		let msg = JSON.parse(smsg);
+			 			// msg = JSON.parse(msg);
+			 		// console.log(msg)
+			 		if(isAdmin){
+				 		$('.pl-score').text(msg.admin)
+				 		$('.rival-score').text(msg.rival)
+			 		}else{
+			 			$('.pl-score').text(msg.rival)
+				 		$('.rival-score').text(msg.admin)
+			 		}
+			 	});
+
+			 	socket.on('drawn', function(){
+			 		swal({
+						title: "DRAWN Game",
+						text: "Hmm, try again!",
+						icon:"info"
+					}).then(ok => {
+						// reset here
+						blocks = [];
+						Reset.game(blocks);
+						// isAdmin = isAdmin?false:true;
+					});
+			 	});
+
+
+			 	socket.on('win', function(){
+			 		swal({
+						title: "WINNER",
+						text: "Yeah you have beat that bitch!",
+						icon:"success"
+					}).then(ok => {
+						// reset here
+						blocks = [];
+						Reset.game(blocks);
+						// isAdmin = isAdmin?false:true;
+					});
+			 	});
+
+			 	socket.on('lose', function(){
+			 		swal({
+						title: "LOOSER",
+						text: "GAME OVER BITCH!",
+						icon:"error"
+					}).then(ok => {
+						// reset here
+						blocks = [];
+						Reset.game(blocks);
+						// isAdmin = isAdmin?false:true;
+					});
+			 	});
+
+				$('.game-area td').on('mouseover',function(){
+					if( !blocks[$(this).data('id')].disabled ){
+						$(this).css('cursor', 'pointer');
+					}else{
+						$(this).css('cursor', 'not-allowed');
+					}
+				});
+
+				// create server
+				$('.server-status').html('Status: <span class="badge badge-success">Connected</span>')
+        
+		        $('.create-server').click(function(){
+		          socket.emit('create_table', {
+		            'name':$('.player-name').val()
+		          });
+		        });
+
+		        $('.join-server').click(function(){
+		          socket.emit('show_me_tables', {
+		            'please':'lemme see'
+		          });
+		        });
+
+		        /*message on success table creation*/
+		        socket.on('create_table_response', function(msg){
+					swal("Dude, wait here. Now we are looking for your rival...", {
+					'button': false,
+					'closeOnClickOutside': false,
+					'closeOnEsc': false,
+					'icon': 'success',
+					'title': 'A server has been created'
+					});
+					// console.log(msg)
+					isAdmin = true;
+					myTurn = true;
+					$('.game-condition').text('Your Turn');
+
+		        });
+
+		        socket.on('dude_take_your_tables', function(msg){
+		          Render.tables(JSON.parse(msg))
+		          /*after rendering bind events*/
+		          $('.join-now').click(function(){
+		            socket.emit('lemme_join', {
+		              'table_id': $(this).data('id'),
+		              'user_token': $(this).data('token'),
+		              'name': PlayerName,
+		              'rival': $(this).data('name')
+		            });
+		          });  
+		          // console.log(msg)
+		        });
+
+		        socket.on('table_is_full', function(){
+		        	swal('Sorry Dude, Table Is FULL', 'Try another table or create one and text your friend to join', 'info');
+		        });
+
+		        socket.on('game_started', function(msg){
+		          var msg = JSON.parse(msg)
+		          tableId = msg.table_id
+		          swal.getState().isOpen == true? swal.close(): ''
+
+		          $('.init-container').remove()
+		          $('.game-container').removeClass('hidden')
+		          $('.inner-container').removeClass('hidden')
+		          // init game
+		          // game.init()
+		          $('.pl-name').text(PlayerName)
+		          // console.log(msg)
+		          $('.rival-name').text(msg.player_name)
+		          gameStarted = true;
+		        });
+
+   			}
+		}else{
+	  		swal('Hey Dude!','Please type something. Don\'t leave it empty :(','error')
+	  		.then(alright => {
+	  			$('.player-name').trigger('focus'); 
+	  		});      
+		}
+	});
+
+
+
+	/*socket.on('hello', function(smsg){
+		console.log('server responded', smsg);
+	});
+*/
+
+	// $('input[value="send"]').on('click', function(){
+	// 	socket.emit('hi', 'bitch');
+	// });
+
+});
+
+let Reset = {
+	game: function(blocks){
+		$('.game-area td').each(function(){
+			blocks.push({
+				'id': $(this).data('id'),
+				'disabled': false,
+				'obj': this,
+				'value': -1
+			});
+			$(this).css('background', 'white');
+		});
+	}
+}
+
+
+let Render = {
+    tables:function(data){
+      $('.createTablesHere').empty()
+      if(data.length == 0){
+        $('.createTablesHere').append(
+          `
+          <tr>
+            <td colspan="4" class="text-center">No active tables</td>
+          </tr>
+          `
+          )
+      }
+      data.forEach(function(e){
+        $('.createTablesHere')
+          .append(`
+            <tr>
+              <th scope="row">${e.id}</th>
+              <td>${e.name}</td>
+              <td>${e.admin_token}</td>
+              <td><button data-id="${e.id}" data-token="${e.admin_token}" data-name="${e.name}" class="btn btn-warning btn-sm float-right join-now">Join Now</button></td>
+            </tr> 
+          `)
+      })
+
+    }
+ };
+</script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>ჯეირანი</title>
+	<meta charset="utf-8">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.7.1/pixi.min.js"></script>
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+	<style>
+		*{
+			padding: 0;
+			margin: 0;
+		}
+	</style>
+</head>
+<body>
+<script>
+
+//Aliases
+let Application = PIXI.Application,
+    Container = PIXI.Container,
+    loader = PIXI.loader,
+    resources = PIXI.loader.resources,
+    TextureCache = PIXI.utils.TextureCache,
+    Sprite = PIXI.Sprite,
+    Rectangle = PIXI.Rectangle;
+
+
+const app = new PIXI.Application();
+
+app.renderer.view.style.position = "absolute";
+app.renderer.view.style.display = "block";
+app.renderer.autoResize = true;
+app.renderer.resize(window.innerWidth, window.innerHeight);
+// The application will create a canvas element for you that you
+// can then insert into the DOM
+document.body.appendChild(app.view);
+
+
+/* functions */
+var Adjust = {
+	// w:h = 0.53
+	width: function(h, obj){
+		obj.width = h * 0.451;
+		return h;
+	},
+	height: function(w, obj){
+		obj.height = w / 0.451;
+		return w;
+	}
+}
+
+
+PIXI.loader.add([
+		// { name: 'tile_set', url: './src/image.png'},
+		{ name: 'json', url: './src/assets.json'}
+	])
+	.on('progress', (loader, resource) => {
+		console.log(`loading: ${resource.url} ${resource.name}, progress: ${loader.progress}% `); 
+	})
+	.load((loader, resources) => {
+
+		let textures = resources.json.textures;
+			console.log(textures);
+		
+/*		let rock = new Sprite(textures["rock.png"]);
+			rock.x = 0;
+			rock.y = 20;
+			rock.width = Adjust.height(100, rock);
+		
+		let scissors = new Sprite(textures["scissors.png"]);
+			scissors.x = 100;
+			scissors.y = 20;
+			scissors.width = Adjust.height(100, scissors);
+		
+
+		let rockl = new Sprite(textures["rockl.png"]);
+			rockl.x = 300;
+			rockl.y = 20;
+			rockl.width = Adjust.height(100, rockl);
+		
+		let scissorsl = new Sprite(textures["scissorsl.png"]);
+			scissorsl.x = 400;
+			scissorsl.y = 20;
+			scissorsl.width = Adjust.height(100, scissorsl);
+		
+		let paperl = new Sprite(textures["paperl.png"]);
+			paperl.x = 500;
+			paperl.y = 20;
+			paperl.width = Adjust.height(100, paperl);
+*/
+		let paper = new Sprite(textures["paper.png"]);
+			paper.x = 400;
+			paper.y = 220;
+			paper.width = Adjust.height(100, paper);
+
+		let paper_tumb = Draw.paper(app, textures)
+			paper_tumb.on('pointerdown', function(){
+				alert('paper clicked')
+			});
+
+		let scissors_tumb = Draw.scissors(app, textures);
+			scissors_tumb.on('pointerdown', function(){
+				alert('scissors')
+			});
+
+		let rock_tumb = Draw.rock(app, textures);
+			rock_tumb.on('pointerdown', function(){
+				alert('rock')
+			});
+
+
+		let textStyle = new PIXI.TextStyle({
+		    fontFamily: 'Arial',
+		    fontSize: 36,
+		    fontWeight: 'bold',
+		    fill: ['#ffffcc', '#22ff99'], // gradient
+		    stroke: '#4a1250',
+		    strokeThickness: 5,
+		    dropShadow: true,
+		    dropShadowColor: '#000000',
+		    dropShadowBlur: 4,
+		    dropShadowAngle: Math.PI / 6,
+		    dropShadowDistance: 6,
+		    wordWrap: true,
+		    wordWrapWidth: 440
+		});
+
+		var richText = new PIXI.Text('Nimda: 2 - 5 : Rival', textStyle);
+		richText.x = app.screen.width / 2 - richText.width / 2;
+		richText.y = 0;
+
+	
+	/*	app.stage.addChild(rock);	
+		app.stage.addChild(scissors);
+
+		app.stage.addChild(rockl);	
+		app.stage.addChild(paperl);	
+		app.stage.addChild(scissorsl);	
+*/
+		app.stage.addChild(rock_tumb);	
+		app.stage.addChild(paper_tumb);	
+		app.stage.addChild(scissors_tumb);	
+
+			app.stage.addChild(richText);
+
+		console.log(paper)
+		/* loop */
+		let rotateForward = 1;
+		app.ticker.add(delta => {
+			// console.log(paper.rotation)
+			paper.anchor.set(1.0)
+
+			if (paper.rotation.toFixed(2) == -0.01){
+				rotateForward = 1;
+			}
+			if (paper.rotation.toFixed(2) == -1.57){
+				rotateForward = 1;
+			}
+			
+			paper.rotation -= 0.01 * rotateForward
+			console.log(paper.rotation.toFixed(2))
+			// console.log(paper.rotation, RightRotateForward)
+			app.stage.addChild(paper);	
+
+		});
+
+	});
+
+
+let Draw = {
+	paper: function(app, textures){
+
+		let paper_tumb = new Sprite(textures["paper_tumb.png"]);
+			paper_tumb.x = app.screen.width / 2;
+			paper_tumb.y = app.screen.height - 50;
+			paper_tumb.anchor.set(0.5);
+			paper_tumb.width = 100;
+			paper_tumb.height = 100;
+			paper_tumb.interactive = true;
+			paper_tumb.buttonMode = true;
+
+		return paper_tumb;
+	},scissors: function(app, textures){
+
+		let scissors_tumb = new Sprite(textures["scissors_tumb.png"]);
+			scissors_tumb.x = app.screen.width / 2 - 100;
+			scissors_tumb.y = app.screen.height - 50;
+			scissors_tumb.anchor.set(0.5);
+			scissors_tumb.width = 100;
+			scissors_tumb.height = 100;
+			scissors_tumb.interactive = true;
+			scissors_tumb.buttonMode = true;
+
+		return scissors_tumb;
+	},rock: function(app, textures){
+
+		let rock_tumb = new Sprite(textures["rock_tumb.png"]);
+			rock_tumb.x = app.screen.width / 2 + 100;
+			rock_tumb.y = app.screen.height - 50;
+			rock_tumb.anchor.set(0.5);
+			rock_tumb.width = 100;
+			rock_tumb.height = 100;
+			rock_tumb.interactive = true;
+			rock_tumb.buttonMode = true;
+
+		return rock_tumb
+	}
+}
+
+</script>
+	
+</body>
+</html>

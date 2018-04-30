@@ -1,0 +1,500 @@
+
+<!doctype html>
+<html>
+  <head>
+    <title>Socket.IO Game</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy" crossorigin="anonymous">
+    <style>
+    .container{
+      z-index: 11;
+    }
+    .col-centered{
+        float: none;
+        margin: 0 auto;
+    }
+    .hidden{
+      display: none;
+    }
+    *{
+      padding: 0;
+      margin: 0;
+    }
+    </style>
+  </head>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.7.1/pixi.min.js"></script>
+      
+<body>
+<script>
+</script>
+<div class="container mt-5">
+  <h1 class="text-center mb-4">Welcome to my <code>P2P</code> game</h1>
+  <h3 class="text-center mb-4 server-status">Status: <span class="badge badge-danger">Not connected</span></h3>
+  <div class="col-md-4 col-centered mb-2 name-container">
+    <input type="text" class="form-control player-name" placeholder="Give me your name" autofocus="on"> 
+  </div>
+  <div class="col-md-4 col-centered text-center button-container">
+    <input type="button" class="btn btn-primary connect-io" value="Connect to a server"> 
+  </div>
+
+  <div class="col-md-6 col-centered mt-5 text-center hidden server-action-container">
+    <button class="btn btn-warning join-server">JOIN </button>
+    <button class="btn btn-danger create-server">CREATE </button>
+  </div>
+
+  <div class="col-md-6 col-centered mt-5 hidden online-tables">
+    <table class="table table-sm table-hover table-stripped">
+    <thead>
+      <tr>
+        <th scope="col">#ID</th>
+        <th scope="col">User</th>
+        <th scope="col">Game Token</th>
+        <th scope="col"><span class="float-right pr-3">Action</span></th>
+      </tr>
+    </thead>
+    <tbody class="createTablesHere">
+      
+    </tbody>
+  </table>
+  </div>
+</div>
+
+
+<script>
+$(document).ready(function(){
+  $('.join-server').click(function(){
+    $(this).html('Refresh list')
+    $('.online-tables').removeClass('hidden')
+  })
+});
+
+
+$(document).ready(function(){
+  $('.connect-io').click(function(){
+    if($('.player-name').val().length !== 0){
+
+      var socket = io();
+      var PlayerName = $('.player-name').val()
+      
+      $('.name-container').addClass('hidden')
+      $('.button-container').addClass('hidden')
+      $('.server-action-container').removeClass('hidden')
+
+      // create socket
+      // console.log(socket)
+      if(undefined !== socket){
+      // create Game object
+          let tableId = 0
+          let isAdmin = false
+          let myTurn = false
+
+
+          let Application = PIXI.Application,
+              Container = PIXI.Container,
+              loader = PIXI.loader,
+              resources = PIXI.loader.resources,
+              TextureCache = PIXI.utils.TextureCache,
+              Sprite = PIXI.Sprite,
+              Graphics = PIXI.Graphics,
+              Rectangle = PIXI.Rectangle;
+
+          const app = new PIXI.Application();
+                app.renderer.view.style.position = "absolute";
+                app.renderer.view.style.display = "block";
+                app.renderer.autoResize = true;
+                app.renderer.resize(window.innerWidth, window.innerHeight);
+             document.body.appendChild(app.view);
+               console.log('view created')
+          
+          let squares = Create.squares(app)
+
+              squares.forEach(function(rect){
+               rect.obj.on('pointerdown', function(){
+                  if( !rect.disabled && myTurn ){
+                    myTurn = false
+
+                    if(isAdmin){
+                      Panel.draw.cross(app, rect.id, squares, 15)
+                    }else{
+                      Panel.draw.circle(app, msg.value, squares, 15)
+                    }
+                    rect.disabled = true
+
+                    /* send over socket*/
+                    console.log('my turn')
+                    var obj = {
+                      'value': rect.id,
+                      // 'rects': rects,
+                      'table_id': tableId,
+                      'myName': PlayerName
+                    };
+                    socket.emit('move', JSON.stringify(obj));
+                    // socket.emit('move', JSON.stringify(obj));
+                     
+                  }
+                });
+                /* design hover*/
+                rect.obj.mouseover = function(mouseData) {
+                  if( !rect.disabled ){
+                    this.alpha = 0.6;
+                  }else{
+                    this.cursor = 'not-allowed'
+                  }
+
+                }
+
+                /*mouseout event*/
+                rect.obj.mouseout = function(mouseData) {
+                  if( !rect.disabled ){
+                    this.alpha = 1.0;
+                  }else{
+                    this.cursor = 'pointer'
+                  }
+                }
+              });
+
+              Draw.squares(app, squares)
+              
+          socket.emit('iaaaaaaaaaa','mothefucker')
+          socket.on('move', function(msg){
+            console.log('yay got update')
+            var msg = JSON.parse(msg);
+            console.log(msg)
+            myTurn = true
+            if(isAdmin){
+              Panel.draw.cross(app, msg.value, squares, 15)
+            }else{
+              Panel.draw.circle(app, msg.value, squares, 15)
+            }
+            
+          })
+
+
+
+
+
+
+        
+        $('.server-status').html('Status: <span class="badge badge-success">Connected</span>')
+        // everything is OKay
+        
+        $('.create-server').click(function(){
+          socket.emit('create_table', {
+            'name':$('.player-name').val()
+          });
+        });
+
+        $('.join-server').click(function(){
+          socket.emit('show_me_tables', {
+            'please':'lemme see'
+          });
+        });
+
+        /*message on success table creation*/
+        socket.on('create_table_response', function(msg){
+          swal("Dude, wait here. Now we are looking for your rival...", {
+            button: false,
+            closeOnClickOutside: false,
+            closeOnEsc: false,
+            icon: 'success',
+            title: 'A server has been created'
+          });
+          console.log(msg)
+          isAdmin = true;
+          myTurn = true;
+        });
+
+        socket.on('dude_take_your_tables', function(msg){
+          Render.tables(JSON.parse(msg))
+          /*after rendering bind events*/
+          $('.join-now').click(function(){
+            socket.emit('lemme_join', {
+              'table_id': $(this).data('id'),
+              'user_token': $(this).data('token'),
+              'name': $('.player-name').val()
+            });
+          });  
+          console.log(msg)
+        });
+
+        socket.on('game_started', function(msg){
+          var msg = JSON.parse(msg)
+          tableId = msg.table_id
+          swal.getState().isOpen == true? swal.close(): ''
+
+          $('.container').remove()
+          // init game
+          // game.init()
+        });
+
+      }
+    }else{
+      alert('Please type anything. Don\'t leave it an empty :(')
+      $('.player-name').trigger('focus')       
+    }
+  })
+})
+
+
+  var Operations = {
+    rnd: function(min, max) {
+      return Math.floor(Math.random() * (max - min)) + min
+    }
+  }
+
+  var Render = {
+    tables:function(data){
+      $('.createTablesHere').empty()
+      if(data.length == 0){
+        $('.createTablesHere').append(
+          `
+          <tr>
+            <td colspan="4" class="text-center">No active tables</td>
+          </tr>
+          `
+          )
+      }
+      data.forEach(function(e){
+        $('.createTablesHere')
+          .append(`
+            <tr>
+              <th scope="row">${e.id}</th>
+              <td>${e.name}</td>
+              <td>${e.admin_token}</td>
+              <td><button data-id="${e.id}" data-token="${e.admin_token}" class="btn btn-warning btn-sm float-right join-now">Join Now</button></td>
+            </tr> 
+          `)
+      })
+
+    }
+  }
+
+
+
+///////////////////////////////////////////////
+ 
+
+  let Create = {
+    squares: function(app){
+      /*
+        @rectangles object container
+        @w  float width of screen
+        @h  float height of screen
+        @d dimansion bigger one width or height
+        @mx float margin x line (right and left) 
+        @my float margin y line (top and bottom) 
+        @c  float container height and width
+        @s  float square dimansions width and height
+        @cx current x position
+        @cy current y position
+      */
+      let rectangles = new Array(),
+        w  = app.screen.width,
+        h  = app.screen.height,
+        d  = w > h ? w : h,
+        c  = d * 40 / 100, // 40 per cent of width
+        mx = (w - c) / 2,
+        my = (h - c) / 2,
+        s  = c / 3,
+        x  = 0,
+        y  = 0;
+
+      [0,1,2,3,4,5,6,7,8].forEach(function(id){
+
+        /* align x and y axis*/
+        x = id % 3
+        y = -1 !== [0,1,2].indexOf(id) ? 
+          0 : -1 !== [3,4,5].indexOf(id) ? 1 : 2
+
+        /* create square object */
+        let cx = x * s + mx,
+          cy = y * s + my,
+          rectangle = new PIXI.Graphics()
+          rectangle.beginFill(0x1f1f1f)
+          rectangle.lineStyle(4, 0xDDDDDD, 1)
+          rectangle.alpha = 1.0
+          rectangle.drawRoundedRect(cx, cy, s, s)
+          rectangle.endFill()
+
+          /* add button click event*/
+          rectangle.interactive = true
+          rectangle.buttonMode = true
+          rectangles.push({
+            id: id,
+            pos: {
+              x: cx,
+              y: cy
+            },
+            width: s,
+            obj: rectangle,
+            disabled: false,
+            value: -1
+          });
+          
+      });
+
+      return rectangles
+    }
+  };
+
+
+  let Draw = {
+    squares: function(app, rects){
+      rects.forEach(function(rect){
+        app.stage.addChild(rect.obj)
+      })
+
+    },circle: function(app, x,  y, r){
+
+      let circle = new PIXI.Graphics();
+        circle.beginFill(0x1f1f1f)
+        circle.lineStyle(4, 0xFFFFFF)
+        circle.drawCircle(x + r, y + r, r)
+        circle.endFill()
+        app.stage.addChild(circle)
+
+    },cross: function(app, x, y, w){
+      let line1 = new PIXI.Graphics();
+        line1.lineStyle(4, 0xFFFFFF, 1);
+        line1.moveTo(x, y);
+        line1.lineTo(x + w, y + w);
+      let line2 = new PIXI.Graphics();
+        line2.lineStyle(4, 0xFFFFFF, 1);
+        line2.moveTo(x, y + w);
+        line2.lineTo(x + w, y);
+
+        app.stage.addChild(line1);
+        app.stage.addChild(line2);
+
+    }
+  };
+
+
+  let Bind = {
+    click: function(app, rects/*, socket*/, self){
+      rects.forEach(function(rect){
+        /* bind click event*/
+        /*rect.obj.click = function(){
+          if( !rect.disabled && self.myTurn ){
+            self.myTurn = false
+
+            if(self.isAdmin){
+              Panel.draw.cross(app, rect.id, rects, 15)
+            }else{
+              Panel.draw.circle(app, msg.value, squares, 15)
+            }
+            rect.disabled = true
+
+            // send over socket
+            console.log('my turn')
+            var obj = {
+              'value': rect.id,
+              // 'rects': rects,
+              'table_id': tableId,
+              'myName': PlayerName
+            };
+            socket.emit('move', JSON.stringify(obj));
+             
+          }
+        }*/
+
+        /*mouseover event*/
+        rect.obj.mouseover = function(mouseData) {
+          if( !rect.disabled ){
+            this.alpha = 0.6;
+          }else{
+            this.cursor = 'not-allowed'
+          }
+
+        }
+
+        /*mouseout event*/
+        rect.obj.mouseout = function(mouseData) {
+          if( !rect.disabled ){
+            this.alpha = 1.0;
+          }else{
+            this.cursor = 'pointer'
+          }
+        }
+      })
+    }
+  };
+
+
+
+  /* 
+    function Panel
+    1 is value for cross
+    0 is value for circle
+    -1 is not set condition by default
+  */
+  let Panel = {
+    draw : {
+      circle: function(app, id, obj, margin = 10){
+      
+        obj[id].value = 0
+        Draw.circle(
+            app,
+            obj[id].pos.x +     margin,
+            obj[id].pos.y +     margin,
+            obj[id].width / 2 - margin
+          );
+      
+      },cross: function(app, id, obj, margin = 10){
+
+        obj[id].value = 1
+        Draw.cross(
+            app,
+            obj[id].pos.x + margin,
+            obj[id].pos.y + margin,
+            obj[id].width - 2 * margin
+          );
+
+      }
+    }
+  };
+
+
+  /*
+    winning map
+  */
+  let Combination = {
+    check: function(rects, value){
+      let lines = new Array(
+          [0,1,2],
+          [3,4,5],
+          [6,7,8],
+          [0,4,8],
+          [2,4,6],
+          [0,3,6],
+          [1,4,7],
+          [2,5,8]
+        );
+
+      for(let line of lines){
+        let counter = 0;
+        for(let index of line){
+          if(rects[index].value == value){
+            counter ++
+          }else{
+            break
+          }
+        }
+        if(counter === 3){
+          return true
+        }
+      }
+
+      return false
+    }
+  }
+
+ 
+
+
+
+</script>
+</body>
+</html>

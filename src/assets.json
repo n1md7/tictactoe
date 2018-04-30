@@ -1,0 +1,48 @@
+{"frames": {
+
+"rock.png":
+{
+	"frame": {"x":48,"y":725,"w":330,"h":643}
+},
+"scissors.png":
+{
+	"frame": {"x":440,"y":725,"w":330,"h":643}
+},
+"paper.png":
+{
+	"frame": {"x":885,"y":725,"w":330,"h":643}
+},
+"paperl.png":
+{
+	"frame": {"x":10,"y":1405,"w":340,"h":643}
+},
+"scissorsl.png":
+{
+	"frame": {"x":441,"y":1405,"w":340,"h":643}
+},
+"rockl.png":
+{
+	"frame": {"x":805,"y":1405,"w":345,"h":643}
+},
+"rock_tumb.png":
+{
+	"frame": {"x":15,"y":403,"w":260,"h":260}
+},
+"scissors_tumb.png":
+{
+	"frame": {"x":297,"y":403,"w":260,"h":260}
+},
+"paper_tumb.png":
+{
+	"frame": {"x":570,"y":403,"w":260,"h":260}
+}},
+"meta": {
+	"app": "http://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "rock.png",
+	"format": "RGBA8888",
+	"size": {"w":516,"h":550},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:51ede84c7a85e4d6aeb31a6020a20858:3923663e59fb40b578d66a492a2cda2d:9995f8b4db1ac3cb75651b1542df8ee2$"
+}
+}
