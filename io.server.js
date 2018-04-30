@@ -46,7 +46,7 @@ var Do = {
 io.on('connection', function(socket){
  	console.log('a user connected');
 
-	/* let user to create a table */
+	/* var user to create a table */
 	socket.on('create_table', function(msg){
 		Do.signup(this, msg);
 		var creator_id = this.id;
@@ -64,7 +64,7 @@ io.on('connection', function(socket){
 		});
 	});
 
-	/* let user to join existing table*/
+	/* var user to join existing table*/
 	socket.on('lemme_join', function(msg){
 		Do.signup(this, msg);
 		var regular_dude = this.id;
@@ -98,7 +98,7 @@ io.on('connection', function(socket){
 
 	});
 
-	/* let give a chance to user to join created tables */
+	/* var give a chance to user to join created tables */
 	socket.on('show_me_tables', function(msg){
 		var regular_dude = this.id;
 		con.query("SELECT tables.id, tables.admin_token, tables.date_time, players.name FROM tables JOIN players ON tables.admin_token = players.user_token ORDER BY 1 DESC", function(err, result){
@@ -118,7 +118,7 @@ io.on('connection', function(socket){
 			player = this.id;
 		con.query("SELECT * FROM tables WHERE id = ?", [msg.table_id], function(e, res){
 			if (e) throw e;
-			let result = res[0];
+			var result = res[0];
 			if(undefined !== res[0]){
 				if( player == result['admin_token']){
 					// player isa dmin
@@ -147,7 +147,7 @@ io.on('connection', function(socket){
 		con.query("SELECT * FROM tables WHERE id = ?", [msg.table_id], function(e, res){
 			if (e) throw e;
 
-			let result = res[0];
+			var result = res[0];
 			if( player == result['admin_token']){
 				isAdmin = true;
 				console.log('admin')
@@ -163,7 +163,7 @@ io.on('connection', function(socket){
 			// console.log(result['admin_token']);
 			// console.log(typeof result['game_data']);
 			var game_data = JSON.parse(result['game_data']);
-			// let gmDt = JSON.parse(result.gameTable);
+			// var gmDt = JSON.parse(result.gameTable);
 
 			if(isAdmin){
 				game_data.gameTable[msg.value] = 0;
@@ -180,7 +180,7 @@ io.on('connection', function(socket){
 				}
 			};
 
-			let score = {
+			var score = {
 					admin: parseInt(game_data.score.admin),
 					rival: parseInt(game_data.score.rival)
 			};
@@ -278,9 +278,9 @@ http.listen(3000, function(){
 /*
     winning map
   */
-  let Combination = {
+  var Combination = {
     check: function(rects, value){
-      let lines = new Array(
+      var lines = new Array(
           [0,1,2],
           [3,4,5],
           [6,7,8],
@@ -291,9 +291,9 @@ http.listen(3000, function(){
           [2,5,8]
         );
 
-      for(let line of lines){
-        let counter = 0;
-        for(let index of line){
+      for(var line of lines){
+        var counter = 0;
+        for(var index of line){
           if(rects[index] == value){
             counter ++
           }else{
@@ -308,7 +308,7 @@ http.listen(3000, function(){
       return false
     },
     drawn:function(rects, value){
-    	let counter = 0;
+    	var counter = 0;
     	rects.forEach(function(e){
     		if(e != value){
     			counter ++;
