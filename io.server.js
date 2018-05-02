@@ -31,16 +31,15 @@ app.get('/', function(req, res){
 });
 */
 
-var Do = {
-	signup: function(obj, msg){
-		var sql = "INSERT INTO players (user_token, name, game_data) VALUES ?";
-		var values = [[obj.id, msg.name, '{"left":372,"top":104}']];
-		con.query(sql, [values], function (err, result) {
-			if (err) throw err;
-			console.log('User '+ msg.name + ' registered')
-		});
-	}
-};
+
+function signup(obj, msg){
+	this.sql = "INSERT INTO players (user_token, name, game_data) VALUES (?,?,?)";
+	this.values = [obj.id.toString(), msg.name, 'null'];
+	con.query(this.sql, this.values, function (err, result) {
+		if (err) throw err;
+		console.log('User '+ msg.name + ' registered')
+	});
+}
 
 
 io.on('connection', function(socket){
@@ -48,7 +47,7 @@ io.on('connection', function(socket){
 
 	/* var user to create a table */
 	socket.on('create_table', function(msg){
-		Do.signup(this, msg);
+		new signup(this, msg);
 		var creator_id = this.id;
 		var gameData = {
 			'adminMove': 'true',
@@ -66,7 +65,7 @@ io.on('connection', function(socket){
 
 	/* var user to join existing table*/
 	socket.on('lemme_join', function(msg){
-		Do.signup(this, msg);
+		new signup(this, msg);
 		var regular_dude = this.id;
 
 		// check whether table is in waiting condition and not busy
@@ -224,22 +223,6 @@ io.on('connection', function(socket){
 	});
 
 
-
-  /* on exchange main game data  */
-  	socket.on('my_data', function(msg){
-	  	var msgJson = JSON.parse(msg);
-	  	console.log(msg);
-	  	// console.log(msgJson);
-	  	var sql = "UPDATE players SET name = ?, game_data = ? WHERE user_token = ?";
-		var values = [msgJson.name, msg, this.id];
-		con.query(sql, values, function (err, result) {
-			if (err) throw err;
-			if(result.affectedRows != 1){
-				console.log("record updated");
-			}
-		});
-		
-    });
 
 	socket.on('disconnect', function(){
 		console.log('user disconnected');
