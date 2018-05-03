@@ -32,7 +32,7 @@ socket.on('game_started', function(msg){
 
 socket.on('update', function(smsg){
 	myTurn = true;
-	let msg = JSON.parse(smsg);
+	var msg = JSON.parse(smsg);
 	blocks[parseInt(msg.value)] = 0;
 	send(rand(0,8), blocks, 'update')
 });
@@ -74,7 +74,7 @@ socket.on('offline', function(){
 });
 
 
-function send(id, blocks, n = ''){
+function send(id, blocks, n){
 	if(blocks.indexOf(-1) == -1){
 		console.log('no -1 there ', n)
 		return;

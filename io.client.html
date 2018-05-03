@@ -418,7 +418,10 @@ let Render = {
           `
           )
       }
+      var prev = 0;
       data.forEach(function(e){
+      	if(prev != e.id){
+      	prev = e.id
         $('.createTablesHere')
           .append(`
             <tr>
@@ -428,6 +431,7 @@ let Render = {
               <td><button data-id="${e.id}" data-token="${e.admin_token}" data-name="${e.name}" class="btn btn-warning btn-sm float-right join-now">Join Now</button></td>
             </tr> 
           `)
+      	}
       })
 
     }
